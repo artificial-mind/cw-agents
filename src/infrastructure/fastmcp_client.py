@@ -63,7 +63,12 @@ class FastMCPClient:
                     if '/messages/' in data:
                         self.endpoint = data
                         if 'session_id=' in data:
-                            self.session_id = data.split('session_id=')[1].split('&')[0]
+                            raw_session_id = data.split('session_id=')[1].split('&')[0]
+                            # FastMCP library strips dashes from UUIDs in URLs, add them back
+                            if len(raw_session_id) == 32 and '-' not in raw_session_id:
+                                self.session_id = f"{raw_session_id[:8]}-{raw_session_id[8:12]}-{raw_session_id[12:16]}-{raw_session_id[16:20]}-{raw_session_id[20:]}"
+                            else:
+                                self.session_id = raw_session_id
                         
                         logger.info(f"✅ Connected - Endpoint: {self.endpoint}, Session: {self.session_id}")
                         break

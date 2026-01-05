@@ -146,6 +146,26 @@ class SimpleExecutor:
             "predict-delay": {
                 "tool": "predictive_delay_detection",
                 "params": lambda p: {"identifier": p.get("shipment_id") or p.get("identifier")}
+            },
+            
+            # Document generation skills
+            "generate-bol": {
+                "tool": "generate_bill_of_lading",
+                "params": lambda p: {"shipment_id": p.get("shipment_id") or p.get("identifier")}
+            },
+            "generate-invoice": {
+                "tool": "generate_commercial_invoice",
+                "params": lambda p: {
+                    "shipment_id": p.get("shipment_id") or p.get("identifier"),
+                    "invoice_number": p.get("invoice_number")
+                }
+            },
+            "generate-packing-list": {
+                "tool": "generate_packing_list",
+                "params": lambda p: {
+                    "shipment_id": p.get("shipment_id") or p.get("identifier"),
+                    "packing_list_number": p.get("packing_list_number")
+                }
             }
         }
     

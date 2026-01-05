@@ -246,6 +246,138 @@ TRACKING_CARD = create_base_card(
                     }
                 }
             ]
+        },
+        
+        # Document generation skills
+        {
+            "name": "generate-bol",
+            "description": "Generate Bill of Lading (BOL) PDF document for a shipment. BOL is the critical shipping document that serves as receipt, contract of carriage, and document of title.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "shipment_id": {
+                        "type": "string",
+                        "description": "Unique shipment identifier"
+                    }
+                },
+                "required": ["shipment_id"]
+            },
+            "outputSchema": {
+                "type": "object",
+                "properties": {
+                    "success": {"type": "boolean"},
+                    "document_type": {"type": "string"},
+                    "document_number": {"type": "string"},
+                    "file_path": {"type": "string"},
+                    "document_url": {"type": "string"},
+                    "file_size_kb": {"type": "number"}
+                }
+            },
+            "examples": [
+                {
+                    "input": {"shipment_id": "job-2025-001"},
+                    "output": {
+                        "success": True,
+                        "document_type": "BILL_OF_LADING",
+                        "document_number": "BOL-job-2025-001",
+                        "file_path": "/generated_documents/BOL_job-2025-001.pdf",
+                        "document_url": "/documents/BOL_job-2025-001.pdf",
+                        "file_size_kb": 2.65
+                    }
+                }
+            ]
+        },
+        {
+            "name": "generate-invoice",
+            "description": "Generate Commercial Invoice PDF for customs clearance. Includes exporter/importer details, line items with HS codes, pricing, and declared customs value.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "shipment_id": {
+                        "type": "string",
+                        "description": "Unique shipment identifier"
+                    },
+                    "invoice_number": {
+                        "type": "string",
+                        "description": "Optional invoice number (auto-generated if not provided)"
+                    }
+                },
+                "required": ["shipment_id"]
+            },
+            "outputSchema": {
+                "type": "object",
+                "properties": {
+                    "success": {"type": "boolean"},
+                    "document_type": {"type": "string"},
+                    "invoice_number": {"type": "string"},
+                    "file_path": {"type": "string"},
+                    "document_url": {"type": "string"},
+                    "file_size_kb": {"type": "number"},
+                    "total_amount": {"type": "number"},
+                    "currency": {"type": "string"}
+                }
+            },
+            "examples": [
+                {
+                    "input": {"shipment_id": "job-2025-001", "invoice_number": "INV-2025-001"},
+                    "output": {
+                        "success": True,
+                        "document_type": "COMMERCIAL_INVOICE",
+                        "invoice_number": "INV-2025-001",
+                        "file_path": "/generated_documents/INV_INV-2025-001.pdf",
+                        "document_url": "/documents/INV_INV-2025-001.pdf",
+                        "file_size_kb": 2.53,
+                        "total_amount": 241500.00,
+                        "currency": "USD"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "generate-packing-list",
+            "description": "Generate Packing List PDF with detailed cargo breakdown. Includes package-by-package details, items, dimensions, weights, and special handling instructions.",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "shipment_id": {
+                        "type": "string",
+                        "description": "Unique shipment identifier"
+                    },
+                    "packing_list_number": {
+                        "type": "string",
+                        "description": "Optional packing list number (auto-generated if not provided)"
+                    }
+                },
+                "required": ["shipment_id"]
+            },
+            "outputSchema": {
+                "type": "object",
+                "properties": {
+                    "success": {"type": "boolean"},
+                    "document_type": {"type": "string"},
+                    "packing_list_number": {"type": "string"},
+                    "file_path": {"type": "string"},
+                    "document_url": {"type": "string"},
+                    "file_size_kb": {"type": "number"},
+                    "total_packages": {"type": "integer"},
+                    "total_weight_kg": {"type": "number"}
+                }
+            },
+            "examples": [
+                {
+                    "input": {"shipment_id": "job-2025-001"},
+                    "output": {
+                        "success": True,
+                        "document_type": "PACKING_LIST",
+                        "packing_list_number": "PKG-job-2025-001",
+                        "file_path": "/generated_documents/PKG_PKG-job-2025-001.pdf",
+                        "document_url": "/documents/PKG_PKG-job-2025-001.pdf",
+                        "file_size_kb": 2.24,
+                        "total_packages": 2,
+                        "total_weight_kg": 401.3
+                    }
+                }
+            ]
         }
     ],
     capabilities=[
@@ -256,6 +388,9 @@ TRACKING_CARD = create_base_card(
         "eta-management",
         "predictive-analytics",
         "ml-predictions",
+        "document-generation",
+        "pdf-export",
+        "customs-documents",
         "state-persistence"
     ]
 )

@@ -75,7 +75,7 @@ class HealthResponse(BaseModel):
     """Health check response."""
     status: str
     version: str
-    crews: Dict[str, str]
+    crews: Dict[str, Any]  # Changed from Dict[str, str] to support int values
 
 
 # ============================================================================
@@ -259,16 +259,30 @@ async def cancel_task(task_id: str):
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
     """Health check endpoint."""
-    return HealthResponse(
-        status="healthy",
-        version="1.0.0",
-        crews={
-            "tracking": "ready" if executor.tracking_crew else "not_initialized",
-            "routing": "ready" if executor.routing_crew else "not_initialized",
-            "exception": "ready" if executor.exception_crew else "not_initialized",
-            "analytics": "ready" if executor.analytics_crew else "not_initialized"
-        }
-    )
+    # Check if executor is SimpleExecutor or CrewExecutor
+    if hasattr(executor, 'skill_map'):
+        # SimpleExecutor - show number of skills
+        return HealthResponse(
+            status="healthy",
+            version="1.0.0",
+            crews={
+                "executor": "SimpleExecutor",
+                "skills_available": len(executor.skill_map) if executor.skill_map else 0,
+                "initialized": "ready"
+            }
+        )
+    else:
+        # CrewExecutor - show crew status
+        return HealthResponse(
+            status="healthy",
+            version="1.0.0",
+            crews={
+                "tracking": "ready" if executor.tracking_crew else "not_initialized",
+                "routing": "ready" if executor.routing_crew else "not_initialized",
+                "exception": "ready" if executor.exception_crew else "not_initialized",
+                "analytics": "ready" if executor.analytics_crew else "not_initialized"
+            }
+        )
 
 
 @app.get("/")
