@@ -203,6 +203,49 @@ TRACKING_CARD = create_base_card(
                     "eta": {"type": "string"}
                 }
             }
+        },
+        {
+            "name": "predict-delay",
+            "description": "Predict if a shipment will be delayed using ML model. Provides probability, confidence score, risk factors, and recommendations.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "shipment_id": {
+                        "type": "string",
+                        "description": "Shipment ID, container number, or bill of lading"
+                    }
+                },
+                "required": ["shipment_id"]
+            },
+            "output_schema": {
+                "type": "object",
+                "properties": {
+                    "shipment_id": {"type": "string"},
+                    "will_delay": {"type": "boolean"},
+                    "confidence": {"type": "number", "description": "Confidence score 0-1"},
+                    "delay_probability": {"type": "number", "description": "Probability of delay 0-1"},
+                    "risk_factors": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "recommendation": {"type": "string"},
+                    "model_accuracy": {"type": "number"}
+                }
+            },
+            "examples": [
+                {
+                    "input": {"shipment_id": "job-2025-001"},
+                    "output": {
+                        "shipment_id": "job-2025-001",
+                        "will_delay": False,
+                        "confidence": 0.731,
+                        "delay_probability": 0.269,
+                        "risk_factors": ["Historical route performance analysis"],
+                        "recommendation": "Moderate confidence in on-time delivery - continue monitoring.",
+                        "model_accuracy": 0.815
+                    }
+                }
+            ]
         }
     ],
     capabilities=[
@@ -211,6 +254,8 @@ TRACKING_CARD = create_base_card(
         "real-time-monitoring",
         "batch-processing",
         "eta-management",
+        "predictive-analytics",
+        "ml-predictions",
         "state-persistence"
     ]
 )

@@ -140,6 +140,12 @@ class SimpleExecutor:
             "track-vessel": {
                 "tool": "real_time_vessel_tracking",
                 "params": lambda p: {"vessel_name": p.get("vessel_name") or p.get("name")}
+            },
+            
+            # Predictive AI skills
+            "predict-delay": {
+                "tool": "predictive_delay_detection",
+                "params": lambda p: {"identifier": p.get("shipment_id") or p.get("identifier")}
             }
         }
     
