@@ -329,10 +329,133 @@ def query_database(query_type: str, parameters: str) -> str:
     return asyncio.run(_async_query())
 
 
+# ============================================================================
+# Real-Time Tracking Tools (Day 6 - Tools 12-14)
+# ============================================================================
+
+@tool("Track Vessel Real-Time")
+def track_vessel_realtime(vessel_name: Optional[str] = None, imo_number: Optional[str] = None, mmsi: Optional[str] = None) -> str:
+    """Track vessel in real-time using AIS data with live position, speed, heading, and ETA.
+    
+    Provides comprehensive vessel tracking including GPS coordinates, navigation status,
+    speed in knots, heading in degrees, next port of call, and estimated arrival time.
+    
+    Args:
+        vessel_name: Name of the vessel (e.g., "MAERSK SEALAND")
+        imo_number: IMO number (7 digits) - alternative to vessel_name
+        mmsi: MMSI number (9 digits) - alternative to vessel_name
+    
+    Returns:
+        Vessel tracking data with position, speed, heading, status, and ETA
+    
+    Example:
+        >>> track_vessel_realtime(vessel_name="MAERSK")
+        {"vessel_name": "MAERSK SEALAND", "position": {"lat": 37.77, "lon": -122.42}, 
+         "speed": 12.64, "heading": 273.0, "status": "Underway using engine"}
+    """
+    async def _async_track():
+        try:
+            pool = await get_mcp_pool()
+            result = await pool.call_tool(
+                "track_vessel_realtime",
+                {
+                    "vessel_name": vessel_name,
+                    "imo_number": imo_number,
+                    "mmsi": mmsi
+                }
+            )
+            return str(result)
+        except Exception as e:
+            logger.error(f"Error tracking vessel real-time: {e}")
+            return f"Error: {str(e)}"
+    
+    return asyncio.run(_async_track())
+
+
+@tool("Track Multimodal Shipment")
+def track_multimodal_shipment(shipment_id: str) -> str:
+    """Track shipment across multiple transport modes (ocean, rail, truck) with complete journey details.
+    
+    Shows all transport legs from origin to destination, progress percentage, current location,
+    handoff points between carriers, and ETA for each leg. Provides comprehensive visibility
+    into the entire supply chain journey.
+    
+    Args:
+        shipment_id: Shipment or job number (e.g., "job-2025-001")
+    
+    Returns:
+        Multimodal tracking data with all legs, progress, and handoff events
+    
+    Example:
+        >>> track_multimodal_shipment("job-2025-001")
+        {"shipment_id": "job-2025-001", "progress_percentage": 16.7, 
+         "journey": [{"mode": "ocean", "from": "Shanghai", "to": "LA", "status": "in_transit"}]}
+    """
+    async def _async_track():
+        try:
+            pool = await get_mcp_pool()
+            result = await pool.call_tool(
+                "track_multimodal_shipment",
+                {"shipment_id": shipment_id}
+            )
+            return str(result)
+        except Exception as e:
+            logger.error(f"Error tracking multimodal shipment {shipment_id}: {e}")
+            return f"Error: {str(e)}"
+    
+    return asyncio.run(_async_track())
+
+
+@tool("Track Container Live")
+def track_container_live(container_number: str) -> str:
+    """Track container with live IoT sensor data including GPS, temperature, humidity, and alerts.
+    
+    Provides real-time container monitoring with comprehensive IoT sensor data:
+    - GPS location (latitude/longitude)
+    - Temperature monitoring (critical for reefer containers)
+    - Humidity levels
+    - Shock/impact detection events
+    - Door open/close event history
+    - Battery level percentage
+    - Active alerts and warnings (temperature deviations, security events, etc.)
+    
+    Args:
+        container_number: Container number (e.g., "MAEU1234567")
+    
+    Returns:
+        Live container tracking data with all IoT sensor readings and alerts
+    
+    Example:
+        >>> track_container_live("MAEU1234567")
+        {"container_number": "MAEU1234567", "gps": {"lat": 37.77, "lon": -122.42},
+         "temperature": {"celsius": -15.8, "deviation": 2.2}, "alert_count": 1}
+    """
+    async def _async_track():
+        try:
+            pool = await get_mcp_pool()
+            result = await pool.call_tool(
+                "track_container_live",
+                {"container_number": container_number}
+            )
+            return str(result)
+        except Exception as e:
+            logger.error(f"Error tracking container live {container_number}: {e}")
+            return f"Error: {str(e)}"
+    
+    return asyncio.run(_async_track())
+
+
 class MCPToolFactory:
     """Factory for creating MCP tool instances."""
     
-    TRACKING_TOOLS = [track_shipment, search_shipments, update_eta]
+    TRACKING_TOOLS = [
+        track_shipment, 
+        search_shipments, 
+        update_eta,
+        track_vessel_realtime,
+        track_multimodal_shipment,
+        track_container_live
+    ]
     ROUTING_TOOLS = [calculate_route, optimize_route, find_alternatives]
     EXCEPTION_TOOLS = [handle_exception, resolve_issue, escalate_problem]
     ANALYTICS_TOOLS = [get_analytics, query_database]

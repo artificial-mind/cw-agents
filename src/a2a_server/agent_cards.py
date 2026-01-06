@@ -248,6 +248,229 @@ TRACKING_CARD = create_base_card(
             ]
         },
         
+        # Day 6 - Real-time tracking skills (Tools 12-14)
+        {
+            "name": "track-vessel-realtime",
+            "description": "Track vessel in real-time using AIS data with comprehensive navigation details. Provides live GPS position, speed in knots, heading in degrees, vessel status, next port, and ETA.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "vessel_name": {
+                        "type": "string",
+                        "description": "Name of the vessel (e.g., 'MAERSK SEALAND', 'MSC GULSUN')"
+                    },
+                    "imo_number": {
+                        "type": "string",
+                        "description": "IMO number (7 digits) - alternative to vessel_name"
+                    },
+                    "mmsi": {
+                        "type": "string",
+                        "description": "MMSI number (9 digits) - alternative to vessel_name"
+                    }
+                }
+            },
+            "output_schema": {
+                "type": "object",
+                "properties": {
+                    "vessel_name": {"type": "string"},
+                    "imo": {"type": "string"},
+                    "mmsi": {"type": "string"},
+                    "position": {
+                        "type": "object",
+                        "properties": {
+                            "lat": {"type": "number"},
+                            "lon": {"type": "number"}
+                        }
+                    },
+                    "speed": {"type": "number", "description": "Speed in knots"},
+                    "heading": {"type": "number", "description": "Heading in degrees"},
+                    "status": {"type": "string", "description": "Navigation status"},
+                    "next_port": {"type": "string"},
+                    "eta": {"type": "string", "format": "date-time"}
+                }
+            },
+            "examples": [
+                {
+                    "input": {"vessel_name": "MAERSK"},
+                    "output": {
+                        "vessel_name": "MAERSK SEALAND",
+                        "position": {"lat": 37.776995, "lon": -122.420063},
+                        "speed": 12.64,
+                        "heading": 273.0,
+                        "status": "Underway using engine",
+                        "next_port": "Oakland",
+                        "eta": "2025-01-25T14:00:00Z"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "track-multimodal",
+            "description": "Track shipment across multiple transport modes (ocean, rail, truck). Shows complete journey with all legs, progress percentage, current location, and handoff points between carriers.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "shipment_id": {
+                        "type": "string",
+                        "description": "Shipment or job number (e.g., 'job-2025-001')"
+                    }
+                },
+                "required": ["shipment_id"]
+            },
+            "output_schema": {
+                "type": "object",
+                "properties": {
+                    "shipment_id": {"type": "string"},
+                    "status": {"type": "string"},
+                    "origin": {"type": "string"},
+                    "destination": {"type": "string"},
+                    "current_mode": {"type": "string"},
+                    "current_location": {"type": "string"},
+                    "progress_percentage": {"type": "number"},
+                    "journey": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "leg_number": {"type": "integer"},
+                                "mode": {"type": "string"},
+                                "carrier": {"type": "string"},
+                                "from": {"type": "string"},
+                                "to": {"type": "string"},
+                                "status": {"type": "string"},
+                                "eta": {"type": "string"}
+                            }
+                        }
+                    },
+                    "total_legs": {"type": "integer"},
+                    "completed_legs": {"type": "integer"}
+                }
+            },
+            "examples": [
+                {
+                    "input": {"shipment_id": "job-2025-001"},
+                    "output": {
+                        "shipment_id": "job-2025-001",
+                        "status": "in_transit",
+                        "progress_percentage": 16.7,
+                        "current_mode": "ocean",
+                        "journey": [
+                            {
+                                "leg_number": 1,
+                                "mode": "ocean",
+                                "from": "Shanghai Port",
+                                "to": "Los Angeles Port",
+                                "status": "in_transit"
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "name": "track-container-live",
+            "description": "Track container with live IoT sensor data. Provides real-time GPS location, temperature monitoring, humidity, shock detection, door events, battery level, and active alerts.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "container_number": {
+                        "type": "string",
+                        "description": "Container number (e.g., 'MAEU1234567')"
+                    }
+                },
+                "required": ["container_number"]
+            },
+            "output_schema": {
+                "type": "object",
+                "properties": {
+                    "container_number": {"type": "string"},
+                    "container_type": {"type": "string"},
+                    "shipment_id": {"type": "string"},
+                    "tracking_status": {"type": "string"},
+                    "battery_level": {"type": "integer"},
+                    "gps": {
+                        "type": "object",
+                        "properties": {
+                            "latitude": {"type": "number"},
+                            "longitude": {"type": "number"},
+                            "accuracy_meters": {"type": "integer"}
+                        }
+                    },
+                    "temperature": {
+                        "type": "object",
+                        "properties": {
+                            "temperature_celsius": {"type": "number"},
+                            "setpoint_celsius": {"type": "number"},
+                            "deviation": {"type": "number"}
+                        }
+                    },
+                    "humidity": {
+                        "type": "object",
+                        "properties": {
+                            "relative_humidity_percent": {"type": "number"}
+                        }
+                    },
+                    "shock_events": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "timestamp": {"type": "string"},
+                                "severity": {"type": "string"},
+                                "g_force": {"type": "number"}
+                            }
+                        }
+                    },
+                    "door_events": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "timestamp": {"type": "string"},
+                                "action": {"type": "string"},
+                                "location": {"type": "string"}
+                            }
+                        }
+                    },
+                    "alerts": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "type": {"type": "string"},
+                                "severity": {"type": "string"},
+                                "message": {"type": "string"}
+                            }
+                        }
+                    },
+                    "alert_count": {"type": "integer"}
+                }
+            },
+            "examples": [
+                {
+                    "input": {"container_number": "MAEU1234567"},
+                    "output": {
+                        "container_number": "MAEU1234567",
+                        "container_type": "40HC Reefer",
+                        "gps": {"latitude": 37.776995, "longitude": -122.420063},
+                        "temperature": {
+                            "temperature_celsius": -15.8,
+                            "setpoint_celsius": -18.0,
+                            "deviation": 2.2
+                        },
+                        "alerts": [
+                            {
+                                "type": "temperature_deviation",
+                                "severity": "medium",
+                                "message": "Temperature deviation: 2.2°C from setpoint"
+                            }
+                        ],
+                        "alert_count": 1
+                    }
+                }
+            ]
+        },
+        
         # Document generation skills
         {
             "name": "generate-bol",
@@ -816,6 +1039,9 @@ def get_crew_by_skill(skill_name: str) -> str:
         "monitor-shipments": "tracking",
         "update-eta": "tracking",
         "track-vessel": "tracking",
+        "track-vessel-realtime": "tracking",
+        "track-multimodal": "tracking",
+        "track-container-live": "tracking",
         # Routing skills
         "calculate-route": "routing",
         "optimize-route": "routing",
