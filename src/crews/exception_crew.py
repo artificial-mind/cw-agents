@@ -358,3 +358,75 @@ class ExceptionCrew:
                 "success": False,
                 "error": str(e)
             }
+    
+    async def proactive_delay_warning(
+        self,
+        shipment_id: str,
+        recipient_email: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Proactively monitor shipment and warn about potential delays (Tool 30).
+        
+        Uses ML predictions to identify high-risk shipments and automatically
+        notifies customers before delays occur. Only triggers if ML confidence > 70%.
+        
+        Args:
+            shipment_id: Shipment ID to monitor
+            recipient_email: Customer email for notification (optional)
+        
+        Returns:
+            Dictionary with warning status and ML prediction details
+        """
+        logger.info(f"⚠️ Proactive delay monitoring for shipment: {shipment_id}")
+        
+        try:
+            # Create task for proactive monitoring
+            task = Task(
+                description=f"""Monitor shipment {shipment_id} for potential delays and proactively warn the customer.
+                
+                Use the proactive_exception_notification tool to:
+                1. Run ML delay prediction on the shipment
+                2. Check if confidence exceeds 70% threshold
+                3. Automatically send delay notification if needed
+                4. Include risk factors and recommended actions
+                
+                Provide clear feedback about:
+                - ML confidence level
+                - Whether warning was sent
+                - Risk factors identified
+                - Customer notification status
+                
+                Be proactive and customer-focused in your communication.""",
+                expected_output="""Status report containing:
+                1. ML prediction confidence
+                2. Warning sent status (yes/no with reason)
+                3. Risk factors if delay predicted
+                4. Customer notification confirmation
+                5. Recommended follow-up actions""",
+                agent=self.exception_handler
+            )
+            
+            crew = Crew(
+                agents=[self.exception_handler],
+                tasks=[task],
+                process=Process.sequential,
+                verbose=True
+            )
+            
+            result = await crew.kickoff_async()
+            
+            return {
+                "success": True,
+                "shipment_id": shipment_id,
+                "result": str(result),
+                "timestamp": datetime.now().isoformat()
+            }
+        
+        except Exception as e:
+            logger.error(f"Error in proactive delay warning: {e}")
+            return {
+                "success": False,
+                "shipment_id": shipment_id,
+                "error": str(e)
+            }
+

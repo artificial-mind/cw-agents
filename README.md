@@ -56,7 +56,7 @@ Server runs on **http://localhost:8001**└────────────�
 
 │   - RoutingAgent                 │
 
-Multi-crew agent system providing **17 skills** across **4 specialized crews**:│   - ExceptionAgent               │
+Multi-crew agent system providing **27 skills** across **4 specialized crews**:│   - ExceptionAgent               │
 
 │   - DocumentationAgent           │
 
@@ -576,7 +576,7 @@ cw-agents/│   │   ├── redis_client.py        # Redis pub/sub client
 
 ✅ **Complete & Tested**│   └── e2e/                       # End-to-end tests
 
-- All 17 skills implemented│
+- All 27 skills implemented│
 
 - All 4 crews working├── docs/
 

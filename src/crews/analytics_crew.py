@@ -446,6 +446,72 @@ class AnalyticsCrew:
                 "error": str(e)
             }
     
+    async def generate_tracking_link(
+        self,
+        shipment_id: str
+    ) -> Dict[str, Any]:
+        """
+        Generate a public tracking link for customer portal access (Tool 29).
+        
+        This creates a secure, time-limited URL that customers can use to track
+        their shipment without authentication. Links are valid for 30 days.
+        
+        Args:
+            shipment_id: Shipment ID to generate tracking link for
+        
+        Returns:
+            Dictionary with tracking URL, token, and expiry information
+        """
+        logger.info(f"🔗 Generating public tracking link for shipment: {shipment_id}")
+        
+        try:
+            # Create task for generating tracking link
+            task = Task(
+                description=f"""Generate a public tracking link for shipment {shipment_id}.
+                
+                Use the generate_customer_portal_link tool to create the tracking URL.
+                
+                Return the tracking URL and provide clear instructions for the customer:
+                - What the link is for
+                - How long it's valid
+                - What they can see using the link
+                - That no login is required
+                
+                Make the message customer-friendly and professional.
+                """,
+                expected_output="""A response containing:
+                1. The public tracking URL
+                2. Expiry date/validity period
+                3. Customer instructions for using the link
+                4. Benefits of using the portal link""",
+                agent=self.report_generator
+            )
+            
+            # Execute with minimal crew
+            crew = Crew(
+                agents=[self.report_generator],
+                tasks=[task],
+                process=Process.sequential,
+                verbose=True
+            )
+            
+            result = await crew.kickoff_async()
+            
+            return {
+                "success": True,
+                "shipment_id": shipment_id,
+                "result": str(result),
+                "generated_at": datetime.now().isoformat()
+            }
+        
+        except Exception as e:
+            logger.error(f"Error generating tracking link: {e}")
+            return {
+                "success": False,
+                "shipment_id": shipment_id,
+                "error": str(e)
+            }
+    
     async def clear_cache(self, pattern: str = "*"):
         """Clear analytics cache."""
         redis_client = await get_redis_client()

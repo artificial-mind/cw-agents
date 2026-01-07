@@ -471,6 +471,96 @@ TRACKING_CARD = create_base_card(
             ]
         },
         
+        # Customer communication skills (Day 7 - Tool 28)
+        {
+            "name": "send-status-update",
+            "description": "Send shipment status notification to customer via email or SMS. Supports multiple notification types (departed, in_transit, arrived, customs_cleared, delivered, delay_warning, exception_alert) and languages.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "shipment_id": {
+                        "type": "string",
+                        "description": "Shipment ID"
+                    },
+                    "notification_type": {
+                        "type": "string",
+                        "description": "Type of notification",
+                        "enum": ["departed", "in_transit", "arrived", "customs_cleared", "delivered", "delay_warning", "exception_alert"]
+                    },
+                    "recipient_email": {
+                        "type": "string",
+                        "description": "Customer email address"
+                    },
+                    "recipient_phone": {
+                        "type": "string",
+                        "description": "Customer phone number (format: +1234567890)"
+                    },
+                    "channel": {
+                        "type": "string",
+                        "description": "Delivery channel",
+                        "enum": ["email", "sms", "both"],
+                        "default": "email"
+                    },
+                    "language": {
+                        "type": "string",
+                        "description": "Notification language",
+                        "enum": ["en", "ar", "zh"],
+                        "default": "en"
+                    }
+                },
+                "required": ["shipment_id", "notification_type"]
+            },
+            "output_schema": {
+                "type": "object",
+                "properties": {
+                    "success": {"type": "boolean"},
+                    "shipment_id": {"type": "string"},
+                    "notification_type": {"type": "string"},
+                    "channel": {"type": "string"},
+                    "timestamp": {"type": "string"},
+                    "deliveries": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "channel": {"type": "string"},
+                                "recipient": {"type": "string"},
+                                "delivered": {"type": "boolean"},
+                                "message_id": {"type": "string"}
+                            }
+                        }
+                    },
+                    "content_preview": {"type": "string"}
+                }
+            },
+            "examples": [
+                {
+                    "input": {
+                        "shipment_id": "SHIP12345",
+                        "notification_type": "departed",
+                        "recipient_email": "customer@example.com",
+                        "channel": "email",
+                        "language": "en"
+                    },
+                    "output": {
+                        "success": True,
+                        "shipment_id": "SHIP12345",
+                        "notification_type": "departed",
+                        "channel": "email",
+                        "deliveries": [
+                            {
+                                "channel": "email",
+                                "recipient": "customer@example.com",
+                                "delivered": True,
+                                "message_id": "email-SHIP12345-1704635000"
+                            }
+                        ],
+                        "content_preview": "Shipment SHIP12345 Has Departed"
+                    }
+                }
+            ]
+        },
+        
         # Document generation skills
         {
             "name": "generate-bol",
@@ -806,6 +896,60 @@ EXCEPTION_CARD = create_base_card(
                     }
                 }
             }
+        },
+        {
+            "name": "proactive-delay-warning",
+            "description": "Proactively warn customers about potential delays using ML predictions. Automatically triggers if ML confidence exceeds 70%. Includes risk factors and recommended actions.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "shipment_id": {
+                        "type": "string",
+                        "description": "Shipment ID to monitor for delays"
+                    },
+                    "recipient_email": {
+                        "type": "string",
+                        "description": "Customer email address (optional)"
+                    }
+                },
+                "required": ["shipment_id"]
+            },
+            "output_schema": {
+                "type": "object",
+                "properties": {
+                    "warning_sent": {
+                        "type": "boolean",
+                        "description": "Whether proactive warning was sent"
+                    },
+                    "ml_confidence": {
+                        "type": "number",
+                        "description": "ML prediction confidence (0.0-1.0)"
+                    },
+                    "risk_factors": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Identified risk factors"
+                    },
+                    "predicted_delay_hours": {
+                        "type": "integer",
+                        "description": "Predicted delay duration in hours"
+                    }
+                }
+            },
+            "examples": [
+                {
+                    "input": {
+                        "shipment_id": "job-2025-001",
+                        "recipient_email": "customer@example.com"
+                    },
+                    "output": {
+                        "warning_sent": True,
+                        "ml_confidence": 0.85,
+                        "risk_factors": ["Weather conditions", "Port congestion"],
+                        "predicted_delay_hours": 24
+                    }
+                }
+            ]
         }
     ],
     capabilities=[
@@ -813,7 +957,8 @@ EXCEPTION_CARD = create_base_card(
         "issue-resolution",
         "escalation-management",
         "auto-detection",
-        "severity-assessment"
+        "severity-assessment",
+        "proactive-monitoring"
     ]
 )
 
@@ -937,6 +1082,48 @@ ANALYTICS_CARD = create_base_card(
                 },
                 "required": ["query_type", "parameters"]
             }
+        },
+        {
+            "name": "generate-tracking-link",
+            "description": "Generate a public tracking link for customer portal access without authentication. Links are valid for 30 days and allow customers to track their shipment without logging in.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "shipment_id": {
+                        "type": "string",
+                        "description": "Shipment ID to generate tracking link for"
+                    }
+                },
+                "required": ["shipment_id"]
+            },
+            "output_schema": {
+                "type": "object",
+                "properties": {
+                    "tracking_url": {
+                        "type": "string",
+                        "description": "Public tracking URL (e.g., https://track.cwlogistics.com/abc-123-xyz)"
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Link expiry date/time"
+                    },
+                    "token": {
+                        "type": "string",
+                        "description": "Unique tracking token (UUID)"
+                    }
+                }
+            },
+            "examples": [
+                {
+                    "input": {"shipment_id": "job-2025-001"},
+                    "output": {
+                        "tracking_url": "https://track.cwlogistics.com/a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                        "expires_at": "2026-02-06T00:00:00Z",
+                        "token": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+                    }
+                }
+            ]
         }
     ],
     capabilities=[
@@ -944,7 +1131,8 @@ ANALYTICS_CARD = create_base_card(
         "kpi-calculation",
         "trend-analysis",
         "performance-forecasting",
-        "data-caching"
+        "data-caching",
+        "public-tracking-links"
     ]
 )
 
@@ -1042,6 +1230,8 @@ def get_crew_by_skill(skill_name: str) -> str:
         "track-vessel-realtime": "tracking",
         "track-multimodal": "tracking",
         "track-container-live": "tracking",
+        # Customer communication skills
+        "send-status-update": "tracking",
         # Routing skills
         "calculate-route": "routing",
         "optimize-route": "routing",
