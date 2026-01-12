@@ -445,6 +445,77 @@ def track_container_live(container_number: str) -> str:
     return asyncio.run(_async_track())
 
 
+# ============================================================================
+# Customer Communication Tools (Day 7 - Tool 28)
+# ============================================================================
+
+@tool("Send Status Update")
+def send_status_update(
+    shipment_id: str,
+    notification_type: str,
+    recipient_email: Optional[str] = None,
+    recipient_phone: Optional[str] = None,
+    channel: str = "email",
+    language: str = "en"
+) -> str:
+    """Send shipment status notification to customer via email or SMS.
+    
+    Sends automated status update notifications to customers. Supports multiple notification
+    types for different shipment milestones and multi-language support.
+    
+    Notification Types:
+    - departed: Shipment has left origin
+    - in_transit: Update while shipment is moving
+    - arrived: Shipment arrived at destination
+    - customs_cleared: Cleared customs successfully
+    - delivered: Final delivery completed
+    - delay_warning: Potential delay detected
+    - exception_alert: Issue requiring attention
+    
+    Args:
+        shipment_id: Shipment ID (e.g., "SHIP12345")
+        notification_type: Type of notification (departed, in_transit, arrived, customs_cleared, 
+                          delivered, delay_warning, exception_alert)
+        recipient_email: Customer email address (required if channel is email or both)
+        recipient_phone: Customer phone number in format +1234567890 (required if channel is sms or both)
+        channel: Delivery channel - "email", "sms", or "both" (default: "email")
+        language: Notification language - "en", "ar", or "zh" (default: "en")
+    
+    Returns:
+        Notification delivery status with message IDs and delivery confirmation
+    
+    Example:
+        >>> send_status_update(
+        ...     shipment_id="SHIP12345",
+        ...     notification_type="departed",
+        ...     recipient_email="customer@example.com",
+        ...     channel="email"
+        ... )
+        {"success": True, "shipment_id": "SHIP12345", "channel": "email", 
+         "deliveries": [{"channel": "email", "delivered": True}]}
+    """
+    async def _async_send():
+        try:
+            pool = await get_mcp_pool()
+            result = await pool.call_tool(
+                "send_status_update",
+                {
+                    "shipment_id": shipment_id,
+                    "notification_type": notification_type,
+                    "recipient_email": recipient_email,
+                    "recipient_phone": recipient_phone,
+                    "channel": channel,
+                    "language": language
+                }
+            )
+            return str(result)
+        except Exception as e:
+            logger.error(f"Error sending status update for {shipment_id}: {e}")
+            return f"Error: {str(e)}"
+    
+    return asyncio.run(_async_send())
+
+
 class MCPToolFactory:
     """Factory for creating MCP tool instances."""
     
@@ -456,15 +527,21 @@ class MCPToolFactory:
         track_multimodal_shipment,
         track_container_live
     ]
+    COMMUNICATION_TOOLS = [send_status_update]
     ROUTING_TOOLS = [calculate_route, optimize_route, find_alternatives]
     EXCEPTION_TOOLS = [handle_exception, resolve_issue, escalate_problem]
     ANALYTICS_TOOLS = [get_analytics, query_database]
-    ALL_TOOLS = [*TRACKING_TOOLS, *ROUTING_TOOLS, *EXCEPTION_TOOLS, *ANALYTICS_TOOLS]
+    ALL_TOOLS = [*TRACKING_TOOLS, *COMMUNICATION_TOOLS, *ROUTING_TOOLS, *EXCEPTION_TOOLS, *ANALYTICS_TOOLS]
     
     @classmethod
     def get_tracking_tools(cls) -> List:
         """Get all tracking tools."""
         return cls.TRACKING_TOOLS.copy()
+    
+    @classmethod
+    def get_communication_tools(cls) -> List:
+        """Get all customer communication tools."""
+        return cls.COMMUNICATION_TOOLS.copy()
     
     @classmethod
     def get_routing_tools(cls) -> List:
@@ -492,7 +569,7 @@ class MCPToolFactory:
         Get tools by categories.
         
         Args:
-            categories: List of category names ("tracking", "routing", "exception", "analytics")
+            categories: List of category names ("tracking", "communication", "routing", "exception", "analytics")
         
         Returns:
             List of tool instances
@@ -501,6 +578,8 @@ class MCPToolFactory:
         for category in categories:
             if category == "tracking":
                 tools.extend(cls.get_tracking_tools())
+            elif category == "communication":
+                tools.extend(cls.get_communication_tools())
             elif category == "routing":
                 tools.extend(cls.get_routing_tools())
             elif category == "exception":

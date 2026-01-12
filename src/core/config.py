@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     
     # Server Configuration
     SERVER_HOST: str = Field(default="0.0.0.0", description="Server host")
-    SERVER_PORT: int = Field(default=8001, description="A2A server port")
+    SERVER_PORT: int = Field(default=9000, description="A2A server port")
     DEBUG: bool = Field(default=False, description="Debug mode")
     
     # LLM Configuration - OpenAI (Primary)
